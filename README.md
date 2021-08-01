@@ -2,9 +2,9 @@
 This is just a simple configuration API I made a while back because I needed one, code is pretty outdated.
 
 # Usage
-## Bukkit
+### Bukkit
 
-### Creating a new instance of the configuration:
+#### Creating a new instance of the configuration:
 ```java
 public class BukkitPlugin extends JavaPlugin {
     
