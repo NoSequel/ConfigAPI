@@ -1,7 +1,7 @@
 # Config API
 This is just a simple configuration API I made a while back because I needed one, code is pretty outdated.
 
-# Usage
+## Usage
 ### Bukkit
 
 #### Creating a new instance of the configuration:
