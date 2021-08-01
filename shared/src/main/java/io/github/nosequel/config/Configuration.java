@@ -96,4 +96,16 @@ public abstract class Configuration {
 
         file.save();
     }
+
+    /**
+     * Register a new {@link ConfigTypeAdapter} to the {@link Configuration#adapterMap} map
+     *
+     * @param clazz       the type of the adapter
+     * @param typeAdapter the adapter to register
+     * @param <T>         the type of the adapter
+     */
+    public <T> void registerAdapter(Class<T> clazz, ConfigTypeAdapter<T> typeAdapter) {
+        this.adapterMap.put(clazz, typeAdapter);
+    }
+
 }
