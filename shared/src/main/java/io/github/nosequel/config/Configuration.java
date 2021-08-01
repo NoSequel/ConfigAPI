@@ -12,10 +12,7 @@ import io.github.nosequel.config.annotation.Configurable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class Configuration {
 
@@ -121,17 +118,13 @@ public abstract class Configuration {
      * @return the converted string
      */
     private String convertArrayToString(Object[] array, ConfigTypeAdapter<?> typeAdapter) {
-        final StringBuilder builder = new StringBuilder();
+        final List<String> list = new ArrayList<>();
 
-        for(int i = 0; i < array.length; i++) {
-            builder.append(typeAdapter.convertCasted(array[i]));
-
-            if(i+1 != array.length) {
-                builder.append("||");
-            }
+        for (Object object : array) {
+            list.add(typeAdapter.convertCasted(object));
         }
 
-        return builder.toString();
+        return list.toString();
     }
 
     /**
@@ -144,11 +137,11 @@ public abstract class Configuration {
      */
     @SuppressWarnings("unchecked")
     private <T> T[] extractArrayFromString(String array, ConfigTypeAdapter<T> typeAdapter) {
+        final String[] list = array.replace("[", "").replace("]", "").split(",");
         final List<T> objects = new ArrayList<>();
-        final String[] parts = array.split("||");
 
-        for (String part : parts) {
-            objects.add(typeAdapter.convert(part));
+        for (String string : list) {
+            objects.add(typeAdapter.convert(string));
         }
 
         return (T[]) objects.stream().toArray();
