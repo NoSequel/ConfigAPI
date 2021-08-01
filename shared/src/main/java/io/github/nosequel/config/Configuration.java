@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
 import com.google.gson.LongSerializationPolicy;
+import com.sun.org.apache.xpath.internal.objects.XObject;
 import io.github.nosequel.config.adapter.ConfigTypeAdapter;
 import io.github.nosequel.config.adapter.defaults.IntegerTypeAdapter;
 import io.github.nosequel.config.adapter.defaults.StringListTypeAdapter;
@@ -122,8 +123,12 @@ public abstract class Configuration {
     private String convertArrayToString(Object[] array, ConfigTypeAdapter<?> typeAdapter) {
         final StringBuilder builder = new StringBuilder();
 
-        for (Object object : array) {
-            builder.append(typeAdapter.convertCasted(object)).append("||,||");
+        for(int i = 0; i < array.length; i++) {
+            builder.append(typeAdapter.convertCasted(array[i]));
+
+            if(i+1 != array.length) {
+                builder.append("||");
+            }
         }
 
         return builder.toString();
@@ -140,7 +145,7 @@ public abstract class Configuration {
     @SuppressWarnings("unchecked")
     private <T> T[] extractArrayFromString(String array, ConfigTypeAdapter<T> typeAdapter) {
         final List<T> objects = new ArrayList<>();
-        final String[] parts = array.split("||,||");
+        final String[] parts = array.split("||");
 
         for (String part : parts) {
             objects.add(typeAdapter.convert(part));
