@@ -53,7 +53,7 @@ public abstract class Configuration {
             if (this.file.get(path) != null) {
                 if (adapter != null) {
                     if (field.getType().isArray()) {
-                        field.set(this, this.extractArrayFromString(this.file.get(path), field.getType(), adapter));
+                        field.set(this, field.getType().cast(this.extractArrayFromString(this.file.get(path), adapter).toArray(new Object[0])));
                     } else {
                         field.set(this, adapter.convert(this.file.get(path)));
                     }
@@ -132,8 +132,7 @@ public abstract class Configuration {
      * @param <T>         the type of the returned array
      * @return the returned array
      */
-    @SuppressWarnings("unchecked")
-    private <T> T[] extractArrayFromString(String array, Class<?> type, ConfigTypeAdapter<T> typeAdapter) {
+    private <T> List<T> extractArrayFromString(String array, ConfigTypeAdapter<T> typeAdapter) {
         final JsonArray jsonArray = this.gson.fromJson(array, JsonArray.class);
         final List<T> objects = new ArrayList<>();
 
@@ -141,7 +140,7 @@ public abstract class Configuration {
             objects.add(typeAdapter.convert(jsonElement.getAsString()));
         }
 
-        return (T[]) type.cast(objects.stream().toArray());
+        return objects;
     }
 
     /**
