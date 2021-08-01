@@ -1,7 +1,6 @@
 package io.github.nosequel.config;
 
 import com.google.gson.*;
-import com.sun.org.apache.xpath.internal.objects.XObject;
 import io.github.nosequel.config.adapter.ConfigTypeAdapter;
 import io.github.nosequel.config.adapter.defaults.IntegerTypeAdapter;
 import io.github.nosequel.config.adapter.defaults.StringListTypeAdapter;
@@ -54,7 +53,7 @@ public abstract class Configuration {
             if (this.file.get(path) != null) {
                 if (adapter != null) {
                     if (field.getType().isArray()) {
-                        field.set(this, this.extractArrayFromString(this.file.get(path), field.getType(), adapter));
+                        field.set(this, this.extractArrayFromString(this.file.get(path), fieldType, adapter));
                     } else {
                         field.set(this, adapter.convert(this.file.get(path)));
                     }
