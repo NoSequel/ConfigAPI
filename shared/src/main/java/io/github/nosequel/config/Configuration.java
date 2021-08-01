@@ -11,6 +11,7 @@ import io.github.nosequel.config.annotation.Configurable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,12 +49,19 @@ public abstract class Configuration {
 
             final Configurable configurable = field.getAnnotation(Configurable.class);
             final String path = configurable.path();
+            final Class<?> fieldType = field.getType().isArray() ?
+                    field.getType().getComponentType()
+                    : field.getType();
 
-            final ConfigTypeAdapter<?> adapter = this.adapterMap.get(field.getType());
+            final ConfigTypeAdapter<?> adapter = this.adapterMap.get(fieldType);
 
             if (this.file.get(path) != null) {
                 if (adapter != null) {
-                    field.set(this, adapter.convert(this.file.get(path)));
+                    if (field.getType().isArray()) {
+                        field.set(this, this.extractArrayFromString(this.file.get(path), adapter));
+                    } else {
+                        field.set(this, adapter.convert(this.file.get(path)));
+                    }
                 } else {
                     if (field.getType().equals(String.class)) {
                         field.set(this, this.file.get(path));
@@ -75,8 +83,11 @@ public abstract class Configuration {
 
             final Configurable configurable = field.getAnnotation(Configurable.class);
             final String path = configurable.path();
+            final Class<?> fieldType = field.getType().isArray() ?
+                    field.getType().getComponentType()
+                    : field.getType();
 
-            final ConfigTypeAdapter<?> adapter = this.adapterMap.get(field.getType());
+            final ConfigTypeAdapter<?> adapter = this.adapterMap.get(fieldType);
             final Object invokingFrom = Modifier.isStatic(field.getModifiers())
                     ? null
                     : this;
@@ -91,10 +102,51 @@ public abstract class Configuration {
                 continue;
             }
 
-            this.file.set(path, adapter.convertCasted(field.get(invokingFrom)));
+            if (field.getType().isArray()) {
+                this.file.set(path, this.convertArrayToString((Object[]) field.get(invokingFrom), adapter));
+            } else {
+                this.file.set(path, adapter.convertCasted(field.get(invokingFrom)));
+            }
         }
 
         file.save();
+    }
+
+    /**
+     * Convert an {@link Object[]} to a {@link String}
+     *
+     * @param array       the array to convert into a string
+     * @param typeAdapter the type adapter to use to convert the individual objects into a string
+     * @return the converted string
+     */
+    private String convertArrayToString(Object[] array, ConfigTypeAdapter<?> typeAdapter) {
+        final StringBuilder builder = new StringBuilder();
+
+        for (Object object : array) {
+            builder.append(typeAdapter.convertCasted(object)).append("||,||");
+        }
+
+        return builder.toString();
+    }
+
+    /**
+     * Extract an {@link T[]} from a {@link String}
+     *
+     * @param array       the string to extract the array of the type from
+     * @param typeAdapter the type adapter to use to convert the string into the object
+     * @param <T>         the type of the returned array
+     * @return the returned array
+     */
+    @SuppressWarnings("unchecked")
+    private <T> T[] extractArrayFromString(String array, ConfigTypeAdapter<T> typeAdapter) {
+        final List<T> objects = new ArrayList<>();
+        final String[] parts = array.split("||,||");
+
+        for (String part : parts) {
+            objects.add(typeAdapter.convert(part));
+        }
+
+        return (T[]) objects.stream().toArray();
     }
 
     /**
