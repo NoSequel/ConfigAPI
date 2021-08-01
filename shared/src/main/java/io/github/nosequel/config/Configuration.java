@@ -1,12 +1,11 @@
 package io.github.nosequel.config;
 
-import com.google.gson.*;
 import io.github.nosequel.config.adapter.ConfigTypeAdapter;
 import io.github.nosequel.config.adapter.defaults.IntegerTypeAdapter;
 import io.github.nosequel.config.adapter.defaults.StringListTypeAdapter;
 import io.github.nosequel.config.annotation.Configurable;
+import io.github.nosequel.config.util.ArrayUtil;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -14,12 +13,6 @@ import java.util.*;
 public abstract class Configuration {
 
     private final ConfigurationFile file;
-
-    private final JsonParser parser = new JsonParser();
-    private final Gson gson = new GsonBuilder()
-            .setPrettyPrinting()
-            .setLongSerializationPolicy(LongSerializationPolicy.STRING).create();
-
     private final Map<Class<?>, ConfigTypeAdapter<?>> adapterMap = new HashMap<>();
 
     /**
@@ -49,21 +42,23 @@ public abstract class Configuration {
                     : field.getType();
 
             final ConfigTypeAdapter<?> adapter = this.adapterMap.get(fieldType);
+            final Object object;
 
             if (this.file.get(path) != null) {
                 if (adapter != null) {
-                    if (field.getType().isArray()) {
-                        field.set(this, this.extractArrayFromString(this.file.get(path), fieldType, adapter));
-                    } else {
-                        field.set(this, adapter.convert(this.file.get(path)));
-                    }
+                    object = field.getType().isArray() ?
+                            ArrayUtil.extractArrayFromString(this.file.get(path), fieldType, adapter)
+                            : adapter.convertCasted(this.file.get(path));
+
+                    field.set(this, object);
                 } else {
-                    if (field.getType().equals(String.class)) {
-                        field.set(this, this.file.get(path));
-                    } else {
-                        field.set(this, gson.fromJson(this.parser.parse(this.file.get(path)), field.getType()));
-                    }
+                    object = field.getType().equals(String.class)
+                            ? this.file.get(path)
+                            : ArrayUtil.GSON.fromJson(ArrayUtil.PARSER.parse(this.file.get(path)), field.getType());
+
                 }
+
+                field.set(this, field.getType().cast(object));
             }
         }
     }
@@ -87,60 +82,23 @@ public abstract class Configuration {
                     ? null
                     : this;
 
+            final Object object;
+
             if (adapter == null) {
-                if (field.getType().equals(String.class)) {
-                    this.file.set(path, field.get(invokingFrom).toString());
-                } else {
-                    this.file.set(path, this.gson.toJson(field.get(invokingFrom)));
-                }
+                object = field.getType().equals(String.class)
+                        ? field.get(invokingFrom).toString()
+                        : ArrayUtil.GSON.toJson(field.get(invokingFrom));
 
-                continue;
-            }
-
-            if (field.getType().isArray()) {
-                this.file.set(path, this.convertArrayToString((Object[]) field.get(invokingFrom), adapter));
             } else {
-                this.file.set(path, adapter.convertCasted(field.get(invokingFrom)));
+                object = field.getType().isArray() ?
+                        ArrayUtil.convertArrayToString((Object[]) field.get(invokingFrom), adapter)
+                        : adapter.convertCasted(field.get(invokingFrom));
             }
+
+            this.file.set(path, object);
         }
 
         file.save();
-    }
-
-    /**
-     * Convert an {@link Object[]} to a {@link String}
-     *
-     * @param array       the array to convert into a string
-     * @param typeAdapter the type adapter to use to convert the individual objects into a string
-     * @return the converted string
-     */
-    private String convertArrayToString(Object[] array, ConfigTypeAdapter<?> typeAdapter) {
-        final JsonArray jsonArray = new JsonArray();
-
-        for (Object object : array) {
-            jsonArray.add(this.parser.parse(gson.toJson(typeAdapter.convertCasted(object))));
-        }
-
-        return this.gson.toJson(jsonArray);
-    }
-
-    /**
-     * Extract an {@link T[]} from a {@link String}
-     *
-     * @param array       the string to extract the array of the type from
-     * @param typeAdapter the type adapter to use to convert the string into the object
-     * @param <T>         the type of the returned array
-     * @return the returned array
-     */
-    private <T> T[] extractArrayFromString(String array, Class<?> type, ConfigTypeAdapter<T> typeAdapter) {
-        final JsonArray jsonArray = this.gson.fromJson(array, JsonArray.class);
-        final T[] objects = (T[]) Array.newInstance(type, jsonArray.size());
-
-        for (int i = 0; i < objects.length; i++) {
-            objects[i] = typeAdapter.convert(jsonArray.get(i).getAsString());
-        }
-
-        return objects;
     }
 
     /**
