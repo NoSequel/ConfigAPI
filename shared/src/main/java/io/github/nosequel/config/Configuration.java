@@ -1,9 +1,6 @@
 package io.github.nosequel.config;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParser;
-import com.google.gson.LongSerializationPolicy;
+import com.google.gson.*;
 import com.sun.org.apache.xpath.internal.objects.XObject;
 import io.github.nosequel.config.adapter.ConfigTypeAdapter;
 import io.github.nosequel.config.adapter.defaults.IntegerTypeAdapter;
@@ -118,13 +115,13 @@ public abstract class Configuration {
      * @return the converted string
      */
     private String convertArrayToString(Object[] array, ConfigTypeAdapter<?> typeAdapter) {
-        final List<String> list = new ArrayList<>();
+        final JsonArray jsonArray = new JsonArray();
 
         for (Object object : array) {
-            list.add(typeAdapter.convertCasted(object));
+            jsonArray.add(this.parser.parse(gson.toJson(typeAdapter.convertCasted(object))));
         }
 
-        return list.toString();
+        return this.gson.toJson(jsonArray);
     }
 
     /**
@@ -137,11 +134,11 @@ public abstract class Configuration {
      */
     @SuppressWarnings("unchecked")
     private <T> T[] extractArrayFromString(String array, ConfigTypeAdapter<T> typeAdapter) {
-        final String[] list = array.replace("[", "").replace("]", "").split(",");
+        final JsonArray jsonArray = this.gson.fromJson(array, JsonArray.class);
         final List<T> objects = new ArrayList<>();
 
-        for (String string : list) {
-            objects.add(typeAdapter.convert(string));
+        for (JsonElement jsonElement : jsonArray) {
+            objects.add(typeAdapter.convert(jsonElement.getAsString()));
         }
 
         return (T[]) objects.stream().toArray();
