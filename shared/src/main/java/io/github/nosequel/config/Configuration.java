@@ -1,5 +1,9 @@
 package io.github.nosequel.config;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParser;
+import com.google.gson.LongSerializationPolicy;
 import io.github.nosequel.config.adapter.ConfigTypeAdapter;
 import io.github.nosequel.config.adapter.defaults.IntegerTypeAdapter;
 import io.github.nosequel.config.adapter.defaults.StringListTypeAdapter;
@@ -14,6 +18,12 @@ import java.util.Map;
 public abstract class Configuration {
 
     private final ConfigurationFile file;
+
+    private final JsonParser parser = new JsonParser();
+    private final Gson gson = new GsonBuilder()
+            .setPrettyPrinting()
+            .setLongSerializationPolicy(LongSerializationPolicy.STRING).create();
+
     private final Map<Class<?>, ConfigTypeAdapter<?>> adapterMap = new HashMap<>();
 
     /**
@@ -41,11 +51,15 @@ public abstract class Configuration {
 
             final ConfigTypeAdapter<?> adapter = this.adapterMap.get(field.getType());
 
-            if(this.file.get(path) != null) {
+            if (this.file.get(path) != null) {
                 if (adapter != null) {
                     field.set(this, adapter.convert(this.file.get(path)));
                 } else {
-                    field.set(this, this.file.get(path));
+                    if (field.getType().equals(String.class)) {
+                        field.set(this, this.file.get(path));
+                    } else {
+                        field.set(this, gson.fromJson(this.parser.parse(this.file.get(path)), field.getType()));
+                    }
                 }
             }
         }
@@ -68,7 +82,11 @@ public abstract class Configuration {
                     : this;
 
             if (adapter == null) {
-                this.file.set(path, field.get(invokingFrom).toString());
+                if (field.getType().equals(String.class)) {
+                    this.file.set(path, field.get(invokingFrom).toString());
+                } else {
+                    this.file.set(path, this.gson.toJson(field.get(invokingFrom)));
+                }
 
                 continue;
             }
