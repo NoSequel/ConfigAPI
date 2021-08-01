@@ -7,6 +7,7 @@ import io.github.nosequel.config.adapter.defaults.IntegerTypeAdapter;
 import io.github.nosequel.config.adapter.defaults.StringListTypeAdapter;
 import io.github.nosequel.config.annotation.Configurable;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -53,7 +54,7 @@ public abstract class Configuration {
             if (this.file.get(path) != null) {
                 if (adapter != null) {
                     if (field.getType().isArray()) {
-                        field.set(this, field.getType().cast(this.extractArrayFromString(this.file.get(path), adapter).toArray(new Object[0])));
+                        field.set(this, this.extractArrayFromString(this.file.get(path), field.getType(), adapter));
                     } else {
                         field.set(this, adapter.convert(this.file.get(path)));
                     }
@@ -132,12 +133,12 @@ public abstract class Configuration {
      * @param <T>         the type of the returned array
      * @return the returned array
      */
-    private <T> List<T> extractArrayFromString(String array, ConfigTypeAdapter<T> typeAdapter) {
+    private <T> T[] extractArrayFromString(String array, Class<?> type, ConfigTypeAdapter<T> typeAdapter) {
         final JsonArray jsonArray = this.gson.fromJson(array, JsonArray.class);
-        final List<T> objects = new ArrayList<>();
+        final T[] objects = (T[]) Array.newInstance(type, jsonArray.size());
 
-        for (JsonElement jsonElement : jsonArray) {
-            objects.add(typeAdapter.convert(jsonElement.getAsString()));
+        for (int i = 0; i < objects.length; i++) {
+            objects[i] = typeAdapter.convert(jsonArray.get(i).getAsString());
         }
 
         return objects;
