@@ -48,14 +48,13 @@ public abstract class Configuration {
                 if (adapter != null) {
                     object = field.getType().isArray() ?
                             ArrayUtil.extractArrayFromString(this.file.get(path), fieldType, adapter)
-                            : adapter.convertCasted(this.file.get(path));
+                            : adapter.convert(this.file.get(path));
 
                     field.set(this, object);
                 } else {
                     object = field.getType().equals(String.class)
                             ? this.file.get(path)
                             : ArrayUtil.GSON.fromJson(ArrayUtil.PARSER.parse(this.file.get(path)), field.getType());
-
                 }
 
                 field.set(this, field.getType().cast(object));
