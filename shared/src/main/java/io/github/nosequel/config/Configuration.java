@@ -1,5 +1,6 @@
 package io.github.nosequel.config;
 
+import com.google.gson.JsonParser;
 import io.github.nosequel.config.adapter.ConfigTypeAdapter;
 import io.github.nosequel.config.adapter.defaults.IntegerTypeAdapter;
 import io.github.nosequel.config.adapter.defaults.StringListTypeAdapter;
@@ -8,11 +9,15 @@ import io.github.nosequel.config.util.ArrayUtil;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class Configuration {
 
     private final ConfigurationFile file;
+
+    private final JsonParser parser = new JsonParser();
     private final Map<Class<?>, ConfigTypeAdapter<?>> adapterMap = new HashMap<>();
 
     /**
@@ -81,20 +86,20 @@ public abstract class Configuration {
                     ? null
                     : this;
 
-            final Object object;
-
             if (adapter == null) {
-                object = field.getType().equals(String.class)
-                        ? field.get(invokingFrom).toString()
-                        : ArrayUtil.GSON.toJson(field.get(invokingFrom));
-
+                if (field.getType().equals(String.class)) {
+                    this.file.set(path, field.get(invokingFrom).toString());
+                } else {
+                    this.file.set(path, parser.parse(ArrayUtil.GSON.toJson(field.get(invokingFrom))));
+                }
             } else {
-                object = field.getType().isArray() ?
+                final Object object = field.getType().isArray() ?
                         ArrayUtil.convertArrayToString((Object[]) field.get(invokingFrom), adapter)
                         : adapter.convertCasted(field.get(invokingFrom));
+
+                this.file.set(path, object);
             }
 
-            this.file.set(path, object);
         }
 
         file.save();

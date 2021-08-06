@@ -1,6 +1,7 @@
 package io.github.nosequel.config.bukkit;
 
 
+import com.google.gson.JsonElement;
 import io.github.nosequel.config.ConfigurationFile;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -48,6 +49,17 @@ public class BukkitConfigurationFile implements ConfigurationFile {
     @Override
     public <T> void set(String path, T object) {
         this.configuration.set(path, object);
+    }
+
+    /**
+     * Set an element in the configuration
+     *
+     * @param path    the path to set the value to
+     * @param element the value to set it to
+     */
+    @Override
+    public void set(String path, JsonElement element) {
+        this.set(path, element.toString());
     }
 
     /**
