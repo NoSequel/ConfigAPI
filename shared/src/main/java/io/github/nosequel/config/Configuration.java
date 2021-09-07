@@ -4,6 +4,7 @@ import com.google.gson.JsonParser;
 import io.github.nosequel.config.adapter.ConfigTypeAdapter;
 import io.github.nosequel.config.adapter.defaults.IntegerTypeAdapter;
 import io.github.nosequel.config.adapter.defaults.StringListTypeAdapter;
+import io.github.nosequel.config.adapter.defaults.StringTypeAdapter;
 import io.github.nosequel.config.annotation.Configurable;
 import io.github.nosequel.config.util.ArrayUtil;
 
@@ -30,6 +31,7 @@ public abstract class Configuration {
         this.file = file;
         this.adapterMap.put(List.class, new StringListTypeAdapter());
         this.adapterMap.put(Integer.class, new IntegerTypeAdapter());
+        this.adapterMap.put(String.class, new StringTypeAdapter()); // rather hacky type adapter, but it should work.
     }
 
     public void load() throws IllegalAccessException {

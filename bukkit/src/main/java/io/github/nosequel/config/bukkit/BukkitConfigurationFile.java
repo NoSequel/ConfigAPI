@@ -1,9 +1,7 @@
 package io.github.nosequel.config.bukkit;
 
-
 import com.google.gson.JsonElement;
 import io.github.nosequel.config.ConfigurationFile;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.bukkit.configuration.file.YamlConfiguration;
 
