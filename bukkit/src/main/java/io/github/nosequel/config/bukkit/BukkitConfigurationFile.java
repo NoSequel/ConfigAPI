@@ -9,11 +9,22 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 
-@RequiredArgsConstructor
 public class BukkitConfigurationFile implements ConfigurationFile {
 
     private final File file;
     private final YamlConfiguration configuration;
+
+    @Deprecated
+    public BukkitConfigurationFile(File file, YamlConfiguration configuration) {
+        this.file = file;
+        this.configuration = configuration;
+    }
+
+    public BukkitConfigurationFile(File file) {
+        this.file = file;
+        this.ensureFileExistence();
+        this.configuration = YamlConfiguration.loadConfiguration(file);
+    }
 
     @SneakyThrows
     @Override
