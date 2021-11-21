@@ -38,7 +38,7 @@ public abstract class Configuration {
         file.load();
 
         for (Field field : this.getClass().getDeclaredFields()) {
-            if (!field.isAccessible() && !field.isAnnotationPresent(Configurable.class)) {
+            if (!field.isAccessible() || !field.isAnnotationPresent(Configurable.class)) {
                 continue;
             }
 
@@ -71,7 +71,7 @@ public abstract class Configuration {
 
     public void save() throws IllegalAccessException {
         for (Field field : this.getClass().getDeclaredFields()) {
-            if (!field.isAccessible() && !field.isAnnotationPresent(Configurable.class)) {
+            if (!field.isAccessible() || !field.isAnnotationPresent(Configurable.class)) {
                 continue;
             }
 
