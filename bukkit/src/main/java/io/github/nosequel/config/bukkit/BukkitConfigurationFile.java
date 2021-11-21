@@ -40,7 +40,7 @@ public class BukkitConfigurationFile implements ConfigurationFile {
 
     @SneakyThrows
     private void ensureFileExistence() {
-        if(!this.file.getParentFile().exists() && file.getParentFile().mkdirs()) {
+        if(this.file.getParentFile() != null && !this.file.getParentFile().exists() && file.getParentFile().mkdirs()) {
             System.out.println("Created parent files");
         }
 
